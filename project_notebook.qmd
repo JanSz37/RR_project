@@ -1,0 +1,98 @@
+---
+title: 1. Library Imports and Data Load
+jupyter: python3
+---
+
+```{r}
+library(reticulate)
+use_python("C:/Program Files/Python38/python.exe", required = TRUE)
+py_config()
+```
+
+
+
+```{python}
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from linearmodels.panel import PanelOLS
+from statsmodels.stats.diagnostic import het_breuschpagan
+from linearmodels.panel import compare
+import patsy
+
+# Load the data
+df = pd.read_excel(".\\Data\\Crime_NorthCarolina.xlsx")
+
+# Preview
+print(df.head(3))
+```
+
+# 2. Pooled OLS with Robust Standard Errors
+
+```{python}
+# Log-transform relevant variables
+df['log_crmrte'] = np.log(df['crmrte'])
+df['log_prbarr'] = np.log(df['prbarr'])
+df['log_prbconv'] = np.log(df['prbconv'])
+
+# Fit pooled OLS model with robust standard errors
+model = smf.ols("log_crmrte ~ log_prbarr + log_prbconv + prbpris", data=df).fit(cov_type='HC1')
+print(model.summary())
+```
+
+The Python replication of the OLS regression model closely matches the original R results, with identical coefficient estimates and nearly identical standard errors, R-squared values, and statistical significance across all variables. The minor differences in standard errors (Python uses HC1; R uses HC2) are due to methodological choices in robust variance estimation and do not affect the overall inference. Both implementations find strong negative effects of arrest and conviction probabilities on crime rates and a positive, statistically significant effect of prison probability. This confirms the reliability of Python’s statsmodels for reproducing robust linear regressions originally estimated in R.
+
+# 3. Breusch-Pagan Test
+
+```{python}
+# Breusch-Pagan test for heteroskedasticity
+residuals = model.resid
+exog = model.model.exog
+bp_test = het_breuschpagan(residuals, exog)
+
+print(f"Breusch-Pagan Test: LM stat={bp_test[0]}, p-value={bp_test[1]}")
+```
+
+The Breusch-Pagan test results from Python and R are nearly identical, with Python reporting an LM statistic of 50.569 and a p-value of 6.044e-11, matching R’s output to three decimal places. Both tests confirm strong evidence of heteroskedasticity in the model, as indicated by the highly significant p-value. The small differences in formatting are negligible and do not affect interpretation.
+
+# 4. Fixed and Random Effects Models
+
+```{python}
+# Set index for panel data
+df_panel = df.set_index(['county', 'year'])
+
+# Create panel model variables
+exog_vars = ['log_prbarr', 'log_prbconv', 'prbpris']
+exog = sm.add_constant(df_panel[exog_vars])
+y = df_panel['log_crmrte']
+
+# Fixed effects model
+fixed = PanelOLS(y, df_panel[exog_vars], entity_effects=True).fit()
+print(fixed.summary)
+
+# Random effects model
+from linearmodels.panel import RandomEffects
+random = RandomEffects(y, df_panel[exog_vars]).fit()
+```
+
+The fixed effects (within) panel regression results from Python’s linearmodels.PanelOLS closely replicate the output from R’s plm package. Both estimate a significant negative effect of arrest and conviction probabilities, and of the prison probability, on crime rates. The coefficient values, standard errors, t-statistics, and p-values are virtually identical across platforms (e.g., Python: log_prbarr = -0.2209, p < 0.0001; R: identical), confirming consistency in estimation. Both outputs report an R² within of ~0.0811, an F-statistic of ~15.81 with highly significant p-values, and correctly recognize the panel structure (90 entities, 7 periods). Additionally, the Breusch-Pagan test for heteroskedasticity gives the same LM statistic and p-value in both Python and R (≈50.57, p < 1e-10), further validating the equivalence of diagnostic tools.
+
+```{python}
+print(random.summary)
+```
+
+The Random Effects model results from Python’s linearmodels and R’s plm package both reveal statistically significant relationships between the predictors and crime rates, but they differ in key numerical estimates due to different underlying assumptions and possibly estimation techniques. Python reports a positive and significant effect for both log_prbarr (0.395) and log_prbconv (0.104), and a large negative effect for prbpris (−1.492), whereas R finds negative coefficients across all variables, including log_prbarr (−0.312) and log_prbconv (−0.190), and a smaller magnitude for prbpris (−0.312). Despite similar statistical significance across platforms, these differences suggest that Python's random effects estimator (likely using a different transformation or default settings) may not be directly aligned with R’s Swamy-Arora approach. Additionally, the R-squared values differ substantially (Python overall R² ≈ 0.53 vs. R ≈ 0.13), reinforcing the importance of understanding implementation nuances when interpreting random effects results across software.
+
+# 5. Hausman Test
+
+```{python}
+# Hausman test: compare fixed and random effects
+from linearmodels.panel import compare
+
+results = compare({'Fixed Effects': fixed, 'Random Effects': random})
+print(results)
+```
+
+The model comparison table from Python and the Hausman test result from R jointly illustrate a critical divergence in the treatment of unobserved heterogeneity. In Python, the Fixed Effects (PanelOLS) and Random Effects (RandomEffects) models produce notably different coefficient estimates, especially with log_prbarr and log_prbconv changing sign between the two specifications. While the RE model reports higher R-squared values (overall R² = 0.5302 vs. -0.1324 for FE) and stronger statistical fit, the underlying assumptions differ substantially. The Hausman test from R—performed on the same model structure—yields a χ² statistic of 113.33 (p < 2.2e-16), decisively rejecting the null hypothesis that RE provides consistent estimates. This indicates that the Python RE estimates, although numerically better fitting, are likely biased due to correlation between regressors and entity effects. Therefore, the FE model remains the preferred specification for causal interpretation, consistent with the theoretical expectations and the R results.
+

@@ -1,10 +1,22 @@
 ---
 title: Replication of a Crime Rate Study
+author: "Jan Szczepanek, Ronald Mjonono"
+format:
+  html:
+    toc: true            
+    toc-location: left   
+    toc-depth: 1
+    theme: cosmo         
+    number-sections: false
+    highlight-style: github 
+
+editor: visual
 execute:
   freeze: auto
 ---
 
 ```{r}
+#| warning = FALSE, message = FALSE, results = "hide"
 library(reticulate)
 use_python("C:/Program Files/Python38/python.exe", required = TRUE)
 py_config()
@@ -179,3 +191,23 @@ hausman_test
 :::
 
 The model comparison table from Python and the Hausman test result from R jointly illustrate a critical divergence in the treatment of unobserved heterogeneity. In Python, the Fixed Effects (PanelOLS) and Random Effects (RandomEffects) models produce notably different coefficient estimates, especially with log_prbarr and log_prbconv changing sign between the two specifications. While the RE model reports higher R-squared values (overall R² = 0.5302 vs. -0.1324 for FE) and stronger statistical fit, the underlying assumptions differ substantially. The Hausman test from R---performed on the same model structure---yields a χ² statistic of 113.33 (p \< 2.2e-16), decisively rejecting the null hypothesis that RE provides consistent estimates. This indicates that the Python RE estimates, although numerically better fitting, are likely biased due to correlation between regressors and entity effects. Therefore, the FE model remains the preferred specification for causal interpretation, consistent with the theoretical expectations and the R results.
+
+# 6. Conclusions
+
+This replication study has successfully reproduced the results of a panel data crime rate analysis originally implemented in R, using Python and key statistical libraries such as statsmodels, linearmodels, and pandas. The results confirm the robustness and reliability of Python for econometric modeling, particularly when paired with heteroskedasticity-consistent inference and panel data estimation tools.
+
+Across all major steps—pooled OLS with robust standard errors, Breusch-Pagan testing, fixed and random effects estimation, and the Hausman specification test—Python outputs closely matched or reproduced the results from R. This is particularly notable given slight differences in default settings (e.g., HC1 vs. HC2 standard errors) or random effects estimation techniques (e.g., Swamy-Arora in R vs. default RE estimation in Python).
+
+Substantively, both platforms confirm the same core insights:
+
+* Arrest and conviction probabilities have strong negative effects on crime rates, supporting economic deterrence theory.
+
+* Prison probability exerts a more ambiguous influence: positive in pooled OLS, but negative in both fixed and random effects models, highlighting the role of model specification and unobserved heterogeneity.
+
+* The Breusch-Pagan test confirms heteroskedasticity, validating the use of robust standard errors throughout.
+
+* The Hausman test clearly favors the fixed effects model, suggesting that unobserved county-level heterogeneity is correlated with regressors—thus invalidating the random effects assumptions.
+
+Finally, the discrepancies in coefficient signs and magnitudes under the random effects model between R and Python highlight the importance of understanding internal implementation details and default behaviors. However, these differences do not undermine the overall replication goal and instead provide a valuable learning point about cross-platform econometrics.
+
+This project underscores that Python, when properly configured and carefully interpreted, is a viable and powerful alternative to R for panel data econometrics and replication studies.

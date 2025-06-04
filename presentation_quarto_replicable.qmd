@@ -11,9 +11,30 @@ editor: visual
 
 ```{r}
 #| warning = FALSE, message = FALSE, results = "hide", echo = FALSE
+renv::restore()
+
 library(reticulate)
-use_python("C:/Program Files/Python38/python.exe", required = TRUE)
+use_python(Sys.which("python"), required = TRUE)
 py_config()
+```
+
+```{python}
+#| warning: false 
+#| message: false 
+#| results: "hide" 
+#| echo: false
+
+import subprocess, sys
+
+result = subprocess.run(
+    [sys.executable, "-m", "pip", "install", "pandas", "numpy", "statsmodels", "openpyxl", "linearmodels"],
+    capture_output=True,
+    text=True 
+)
+
+print(result.stdout)
+print(result.stderr)
+
 ```
 
 # 1. Introduction
@@ -37,7 +58,7 @@ from linearmodels.panel import compare
 import patsy
 
 # Load the data
-df = pd.read_excel(".\\Data\\Crime_NorthCarolina.xlsx")
+df = pd.read_excel("Data/Crime_NorthCarolina.xlsx")
 
 # Preview
 print(df.head(3))
@@ -51,15 +72,25 @@ library(lmtest)
 library(readxl)
 library(estimatr)
 library(plm)
-df <- read_excel(".\\Data\\Crime_NorthCarolina.xlsx")
+df <- read_excel("Data/Crime_NorthCarolina.xlsx")
 head(df,n=3)
 ```
 :::
 
+## Dataset description (from Kaggle)
+
+The original author proposes the following variable choice for the model: 
+
+- **crmrte** as the dependent variable. It contains the information about crimes committed per person.
+- **prbarr**, probability of arrest of the average person in a given county, in the given year.
+- **prbconv**, probability of conviction of the average person in a given county, in the given year.
+- **prbpris**, probability of serving a prison sentence for the average person in a given county, in the given year.
+
+All of this leads to the thesis that prosecution and incarceration rates lead to a lower crime rate in a certain region and point in time. 
+
 # 2. Pooled OLS with Robust Standard Errors
 
 We first create a Pooled OLS model with Standard Errors. We then test both models for heteroskedasticity. If the null hypothesis is rejected, we have a problem with model residuals.
-
 
 ::: panel-tabset
 ### Python
@@ -82,7 +113,6 @@ model <- lm_robust(log(crmrte) ~ log(prbarr) + log(prbconv) + prbpris, data = df
 summary(model)
 ```
 :::
-
 
 The Python replication of the OLS regression model closely matches the original R results, with identical coefficient estimates and nearly identical standard errors, R-squared values, and statistical significance across all variables. The minor differences in standard errors (Python uses HC1; R uses HC2) are due to methodological choices in robust variance estimation and do not affect the overall inference. Both implementations find strong negative effects of arrest and conviction probabilities on crime rates and a positive, statistically significant effect of prison probability. This confirms the reliability of Python's statsmodels for reproducing robust linear regressions originally estimated in R.
 
@@ -227,3 +257,11 @@ The estimated coefficients from the fixed effects model are as follows:
 All these effects are statistically significant at conventional levels, and the signs are consistent with predictions from deterrence theory. Although the within R-squared of the model is relatively modest (around 0.08), this is typical in empirical studies of crime, where unobserved behavioral and environmental factors play a substantial role.
 
 These findings support the hypothesis that improvements in the certainty and severity of punishment are associated with reductions in crime rates.
+
+---
+
+### Field for improvement
+
+The study did prove its initial thesis, although some doubts arose in the process of it replication. The most prominent one would be that of omitted variables.
+Linking incarceration rates with crime rates without taking into account other factors, like access to education or systemic racism might prove to be short sighted.
+The dataset lacks the proposed variables, although it does have complex average wages for the counties. Poverty is often associated with crime rates, which is why we propose to include the information about the wages in the next replication.

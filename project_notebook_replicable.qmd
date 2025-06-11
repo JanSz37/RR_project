@@ -47,6 +47,10 @@ print(result.stderr)
 
 # 1. Library Imports and Data Load
 
+This study aims to replicate the paper of Apoorva Yerpude entitled "Crime Rate Econometric Analysis". It can be found on [Kaggle](https://www.kaggle.com/code/apoorvayerpude/crime-rate-econometric-analysis). The original paper was written in R, with our replication being translated to Python. The ultimate goal is to evaluate the differences between the languages, examine the reprudicability of the study and to interpret the results on our own.
+
+We examine the tables to see if they loaded properly.
+
 ::: panel-tabset
 ### Python
 
@@ -80,7 +84,22 @@ head(df,n=3)
 ```
 :::
 
+## Dataset description (from Kaggle)
+
+This dataset regards the crime rates and some of the factors influencing them in 90 North Carolina counties between the years 1981-1987. The number of observations totals 630.
+
+The original author proposes the following variable choice for the model: 
+
+- **crmrte** as the dependent variable. It contains the information about crimes committed per person.
+- **prbarr**, probability of arrest of the average person in a given county, in the given year.
+- **prbconv**, probability of conviction of the average person in a given county, in the given year.
+- **prbpris**, probability of serving a prison sentence for the average person in a given county, in the given year.
+
+All of this leads to the thesis that prosecution and incarceration rates lead to a lower crime rate in a certain region and point in time. 
+
 # 2. Pooled OLS with Robust Standard Errors
+
+We first create a Pooled OLS model with Standard Errors. We then test both models for heteroskedasticity. If the null hypothesis is rejected, we have a problem with model residuals.
 
 ::: panel-tabset
 ### Python
@@ -124,7 +143,7 @@ bptest(model)
 ```
 :::
 
-The Breusch-Pagan test results from Python and R are nearly identical, with Python reporting an LM statistic of 50.569 and a p-value of 6.044e-11, matching R's output to three decimal places. Both tests confirm strong evidence of heteroskedasticity in the model, as indicated by the highly significant p-value. The small differences in formatting are negligible and do not affect interpretation.
+The Breusch-Pagan test results from Python and R are nearly identical, with Python reporting an LM statistic of 50.569 and a p-value of 6.044e-11, matching R's output to three decimal places. Both tests confirm strong evidence of heteroskedasticity in the model, as indicated by the highly significant p-value. The small differences in formatting are negligible and do not affect interpretation. Both models exhibit a stron heteroskedasticity problem. Let us try Fixed and Random effects models in order to find a more homoskedastic solution.
 
 # 4. Fixed and Random Effects Models
 
@@ -239,3 +258,9 @@ The estimated coefficients from the fixed effects model are as follows:
 All these effects are statistically significant at conventional levels, and the signs are consistent with predictions from deterrence theory. Although the within R-squared of the model is relatively modest (around 0.08), this is typical in empirical studies of crime, where unobserved behavioral and environmental factors play a substantial role.
 
 These findings support the hypothesis that improvements in the certainty and severity of punishment are associated with reductions in crime rates.
+
+### Field for improvement
+
+The study did prove its initial thesis, although some doubts arose in the process of it replication. The most prominent one would be that of omitted variables.
+Linking incarceration rates with crime rates without taking into account other factors, like access to education or systemic racism might prove to be short sighted.
+The dataset lacks the proposed variables, although it does have complex average wages for the counties. Poverty is often associated with crime rates, which is why we propose to include the information about the wages in the next replication.

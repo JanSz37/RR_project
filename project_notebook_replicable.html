@@ -122,6 +122,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="library-imports-and-data-load" class="level1">
 <h1>1. Library Imports and Data Load</h1>
+<p>This study aims to replicate the paper of Apoorva Yerpude entitled “Crime Rate Econometric Analysis”. It can be found on <a href="https://www.kaggle.com/code/apoorvayerpude/crime-rate-econometric-analysis">Kaggle</a>. The original paper was written in R, with our replication being translated to Python. The ultimate goal is to evaluate the differences between the languages, examine the reprudicability of the study and to interpret the results on our own.</p>
+<p>We examine the tables to see if they loaded properly.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">R</a></li></ul>
 <div class="tab-content">
@@ -178,9 +180,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<section id="dataset-description-from-kaggle" class="level2">
+<h2 class="anchored" data-anchor-id="dataset-description-from-kaggle">Dataset description (from Kaggle)</h2>
+<p>This dataset regards the crime rates and some of the factors influencing them in 90 North Carolina counties between the years 1981-1987. The number of observations totals 630.</p>
+<p>The original author proposes the following variable choice for the model:</p>
+<ul>
+<li><strong>crmrte</strong> as the dependent variable. It contains the information about crimes committed per person.</li>
+<li><strong>prbarr</strong>, probability of arrest of the average person in a given county, in the given year.</li>
+<li><strong>prbconv</strong>, probability of conviction of the average person in a given county, in the given year.</li>
+<li><strong>prbpris</strong>, probability of serving a prison sentence for the average person in a given county, in the given year.</li>
+</ul>
+<p>All of this leads to the thesis that prosecution and incarceration rates lead to a lower crime rate in a certain region and point in time.</p>
+</section>
 </section>
 <section id="pooled-ols-with-robust-standard-errors" class="level1">
 <h1>2. Pooled OLS with Robust Standard Errors</h1>
+<p>We first create a Pooled OLS model with Standard Errors. We then test both models for heteroskedasticity. If the null hypothesis is rejected, we have a problem with model residuals.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">R</a></li></ul>
 <div class="tab-content">
@@ -198,8 +213,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 Dep. Variable:             log_crmrte   R-squared:                       0.461
 Model:                            OLS   Adj. R-squared:                  0.458
 Method:                 Least Squares   F-statistic:                     75.79
-Date:                Tue, 03 Jun 2025   Prob (F-statistic):           7.91e-42
-Time:                        23:14:30   Log-Likelihood:                -347.95
+Date:                Wed, 11 Jun 2025   Prob (F-statistic):           7.91e-42
+Time:                        09:10:30   Log-Likelihood:                -347.95
 No. Observations:                 630   AIC:                             703.9
 Df Residuals:                     626   BIC:                             721.7
 Df Model:                           3                                         
@@ -282,7 +297,7 @@ BP = 50.569, df = 3, p-value = 6.044e-11</code></pre>
 </div>
 </div>
 </div>
-<p>The Breusch-Pagan test results from Python and R are nearly identical, with Python reporting an LM statistic of 50.569 and a p-value of 6.044e-11, matching R’s output to three decimal places. Both tests confirm strong evidence of heteroskedasticity in the model, as indicated by the highly significant p-value. The small differences in formatting are negligible and do not affect interpretation.</p>
+<p>The Breusch-Pagan test results from Python and R are nearly identical, with Python reporting an LM statistic of 50.569 and a p-value of 6.044e-11, matching R’s output to three decimal places. Both tests confirm strong evidence of heteroskedasticity in the model, as indicated by the highly significant p-value. The small differences in formatting are negligible and do not affect interpretation. Both models exhibit a stron heteroskedasticity problem. Let us try Fixed and Random effects models in order to find a more homoskedastic solution.</p>
 </section>
 <section id="fixed-and-random-effects-models" class="level1">
 <h1>4. Fixed and Random Effects Models</h1>
@@ -308,8 +323,8 @@ BP = 50.569, df = 3, p-value = 6.044e-11</code></pre>
 Dep. Variable:             log_crmrte   R-squared:                        0.0811
 Estimator:                   PanelOLS   R-squared (Between):             -0.1328
 No. Observations:                 630   R-squared (Within):               0.0811
-Date:                Tue, Jun 03 2025   R-squared (Overall):             -0.1324
-Time:                        23:14:30   Log-likelihood                    252.82
+Date:                Wed, Jun 11 2025   R-squared (Overall):             -0.1324
+Time:                        09:10:30   Log-likelihood                    252.82
 Cov. Estimator:            Unadjusted                                           
                                         F-statistic:                      15.806
 Entities:                          90   P-value                           0.0000
@@ -396,8 +411,8 @@ F-statistic: 15.8059 on 3 and 537 DF, p-value: 7.3095e-10</code></pre>
 Dep. Variable:             log_crmrte   R-squared:                        0.2386
 Estimator:              RandomEffects   R-squared (Between):              0.5331
 No. Observations:                 630   R-squared (Within):              -0.8197
-Date:                Tue, Jun 03 2025   R-squared (Overall):              0.5302
-Time:                        23:14:30   Log-likelihood                   -168.22
+Date:                Wed, Jun 11 2025   R-squared (Overall):              0.5302
+Time:                        09:10:30   Log-likelihood                   -168.22
 Cov. Estimator:            Unadjusted                                           
                                         F-statistic:                      65.485
 Entities:                          90   P-value                           0.0000
@@ -551,6 +566,10 @@ alternative hypothesis: one model is inconsistent</code></pre>
 </ul>
 <p>All these effects are statistically significant at conventional levels, and the signs are consistent with predictions from deterrence theory. Although the within R-squared of the model is relatively modest (around 0.08), this is typical in empirical studies of crime, where unobserved behavioral and environmental factors play a substantial role.</p>
 <p>These findings support the hypothesis that improvements in the certainty and severity of punishment are associated with reductions in crime rates.</p>
+</section>
+<section id="field-for-improvement" class="level3">
+<h3 class="anchored" data-anchor-id="field-for-improvement">Field for improvement</h3>
+<p>The study did prove its initial thesis, although some doubts arose in the process of it replication. The most prominent one would be that of omitted variables. Linking incarceration rates with crime rates without taking into account other factors, like access to education or systemic racism might prove to be short sighted. The dataset lacks the proposed variables, although it does have complex average wages for the counties. Poverty is often associated with crime rates, which is why we propose to include the information about the wages in the next replication.</p>
 </section>
 </section>
 </section>

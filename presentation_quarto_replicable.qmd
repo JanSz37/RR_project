@@ -79,6 +79,8 @@ head(df,n=3)
 
 ## Dataset description (from Kaggle)
 
+This dataset regards the crime rates and some of the factors influencing them in 90 North Carolina counties between the years 1981-1987. The number of observations totals 630.
+
 The original author proposes the following variable choice for the model: 
 
 - **crmrte** as the dependent variable. It contains the information about crimes committed per person.
@@ -147,19 +149,15 @@ The Breusch-Pagan test results from Python and R are nearly identical, with Pyth
 ### Python
 
 ```{python}
-# Set index for panel data
 df_panel = df.set_index(['county', 'year'])
 
-# Create panel model variables
 exog_vars = ['log_prbarr', 'log_prbconv', 'prbpris']
 exog = sm.add_constant(df_panel[exog_vars])
 y = df_panel['log_crmrte']
 
-# Fixed effects model
 fixed = PanelOLS(y, df_panel[exog_vars], entity_effects=True).fit()
 print(fixed.summary)
 
-# Random effects model
 from linearmodels.panel import RandomEffects
 random = RandomEffects(y, df_panel[exog_vars]).fit()
 ```
@@ -167,12 +165,10 @@ random = RandomEffects(y, df_panel[exog_vars]).fit()
 ### R
 
 ```{r}
-# fixed effect model and random effect model using plm
 library(plm)
 
 fixed = plm(log(crmrte) ~ log(prbarr) + log(prbconv) + prbpris, data=df, index=c("county", "year"), model="within")
 random = plm(log(crmrte) ~ log(prbarr) + log(prbconv) + prbpris, data=df, index=c("county", "year"), model="random")
-# fixed effect model summary
 summary(fixed)
 ```
 :::
@@ -265,3 +261,4 @@ These findings support the hypothesis that improvements in the certainty and sev
 The study did prove its initial thesis, although some doubts arose in the process of it replication. The most prominent one would be that of omitted variables.
 Linking incarceration rates with crime rates without taking into account other factors, like access to education or systemic racism might prove to be short sighted.
 The dataset lacks the proposed variables, although it does have complex average wages for the counties. Poverty is often associated with crime rates, which is why we propose to include the information about the wages in the next replication.
+
